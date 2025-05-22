@@ -103,8 +103,6 @@ function SuperAdminLogin() {
   const [errors, setErrors] = useState({});
   const route = useRouter();
 
-  
-
   useEffect(() => {
     // Check if user is already logged in
     const userData = localStorage.getItem("userData");
@@ -112,6 +110,10 @@ function SuperAdminLogin() {
       const user = JSON.parse(userData);
       // Redirect based on user group
       if (user.group === "user") {
+        route.push("/home");
+      } else if (user.group === "admin") {
+        route.push("/home");
+      } else if (user.group === "superadmin") {
         route.push("/home");
       }
     }

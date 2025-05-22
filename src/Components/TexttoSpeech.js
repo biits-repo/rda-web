@@ -35,8 +35,7 @@ function TexttoSpeech() {
         ) {
           setIsAuthorized(true);
         } else {
-          // User doesn't have required permissions
-          router.push("/Dashboard");
+          router.push("/home");
         }
       } catch (error) {
         console.error("Authentication check failed:", error);

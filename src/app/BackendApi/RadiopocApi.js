@@ -7,22 +7,10 @@ export const RadioPOCAPI = {
         "https://expenseapp.creowiz.com/api/get_sponsor_names/"
       );
       if (res.status === 200) {
-        return res.data;
+        return res.data.results;
       }
     } catch (error) {
       throw "Total Registration Failed";
-    }
-  },
-  SponsonsorOccurance: async () => {
-    try {
-      const res = await axios.get(
-        "https://expenseapp.creowiz.com/api/get_sponsor_occurence/"
-      );
-      if (res.status === 200) {
-        return res.data;
-      }
-    } catch (error) {
-      throw "Sponsor Occurrence Failed";
     }
   },
   RegistrationApi: async (data) => {
