@@ -1,95 +1,3 @@
-// "use client";
-// import React from "react";
-// import Radioailogo from "../assets/radioailogo.png";
-// import { IoIosArrowRoundBack } from "react-icons/io";
-// import { UserApprovalData } from "@/Data/UserApprovalData";
-// import { useRouter } from "next/navigation";
-
-// function UserApproval() {
-//   const route = useRouter();
-//   return (
-//     <div className="min-h-screen grid grid-rows-[auto_1fr] bg-white">
-//       {/* Logo Section */}
-//       <div>
-//         <img src={Radioailogo.src} className="pt-5 pl-10 w-[160px]" />
-//       </div>
-
-//       <div className="grid grid-cols-1 lg:grid-cols-12">
-//         <div className="lg:col-span-2 bg-[white] p-4">
-//           <p className=""></p>
-//         </div>
-
-//         {/* Right Content */}
-//         <div className="lg:col-span-10 bg-[#ECF2F9] p-4 rounded-tl-3xl">
-//           <div>
-//             {/* header  */}
-//             <div className="flex items-center mb-4 justify-between">
-//               <div className="flex items-center mb-4">
-//                 <div
-//                   onClick={() => {
-//                     route.back();
-//                   }}
-//                   className="bg-[#FFFFFFCC] p-2 rounded-[5px] shadow-lg border-[2px] border-[#979797]"
-//                 >
-//                   <IoIosArrowRoundBack
-//                     size={30}
-//                     color="#1C1C1C"
-//                     className="text-2xl  cursor-pointer"
-//                   />
-//                 </div>
-//                 <h1 className="text-2xl font-bold text-[#1C1C1C] ml-[40px]">
-//                   User Management
-//                 </h1>
-//               </div>
-//               <div className="flex items-center mb-4">
-//                 <div className="bg-[#FFFFFFCC] ">
-//                   <input
-//                     placeholder="Search User"
-//                     className="px-2 py-[6px] rounded-[5px] shadow-lg border-[2px] border-[#979797]"
-//                   />
-//                 </div>
-//                 <h1 className="text-1xl font-bold text-[#1B2B07] ml-[40px] bg-[#FCCE60] px-3 py-[7px] rounded-[7px] hover:cursor-pointer">
-//                   Add User
-//                 </h1>
-//               </div>
-//             </div>
-
-//             {/* data  */}
-//             <div>
-//               {UserApprovalData.map((user) => (
-//                 <table key={user?.id}>
-//                   <tr>
-//                     <th>Name</th>
-//                     <th>User Role</th>
-//                     <th>User Role</th>
-//                   </tr>
-//                   <tr>
-//                     <td>
-//                       <div>
-//                         <div>{user.name}</div>
-//                         <div>{user.email}</div>
-//                       </div>
-//                     </td>
-//                     <td>
-//                       <div>
-//                         {user.role.map((role) => (
-//                           <span>{role}</span>
-//                         ))}
-//                       </div>
-//                     </td>
-//                   </tr>
-//                 </table>
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default UserApproval;
-
 "use client";
 import React, { useState, useEffect } from "react";
 import Radioailogo from "../assets/radioailogo.png";
@@ -104,7 +12,7 @@ import { AiFillEyeInvisible } from "react-icons/ai";
 import { AiFillEye } from "react-icons/ai";
 import axios, { all } from "axios";
 import { RadioPOCAPI } from "@/app/BackendApi/RadiopocApi";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { useAuth, hasRole } from "@/lib/authUtils";
 
 function UserApproval() {
@@ -128,7 +36,7 @@ function UserApproval() {
     top: 0,
     left: 0,
   });
-  const [availableRoles] = useState(["Admin", "User", "Super Admin"]);
+  const [availableRoles] = useState(["Admin", "User"]);
   const [userRoles, setUserRoles] = useState({});
   const [modal, setModal] = useState(false);
   const itemsPerPage = 8;
@@ -353,7 +261,9 @@ function UserApproval() {
 
     try {
       const res = await RadioPOCAPI.RegistrationApi(userdata);
-      toast.success("User added successfully");
+      setTimeout(() => {
+        toast.success("User added successfully");
+      }, 500);
       setModal(false);
       setUserdata({
         username: "",
@@ -363,6 +273,7 @@ function UserApproval() {
         password: "",
         role: "",
       });
+      allData();
     } catch (error) {
       toast.error("Registration failed. Please try again.");
     }
@@ -439,6 +350,7 @@ function UserApproval() {
             </div>
 
             <div>
+              <ToastContainer />
               {/* Table */}
               <div className="overflow-x-auto relative  ">
                 <div className="px-8 py-3 text-sm text-gray-500 bg-[#F2F2F2]">
@@ -867,12 +779,11 @@ function UserApproval() {
                     name="role"
                     value={userdata.role}
                     onChange={handleChange}
-                    className="border border-[#979797] rounded-[5px] px-2 py-2 w-[30%]"
+                    className="border border-[#979797] rounded-[5px] px-2 py-2   w-[30%]"
                   >
                     <option value="">Choose</option>
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
-                    <option value="super-admin">Super Admin</option>
                   </select>
                 </div>
                 <div className="col-span-2 py-2"></div>

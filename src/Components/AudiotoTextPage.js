@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-function TexttoSpeech() {
+function AudiotoTextPage() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,54 +135,58 @@ function TexttoSpeech() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-3xl bg-white rounded-xl shadow-2xl p-8 border border-blue-100">
-        <h1 className="text-4xl font-bold text-blue-700 mb-6 text-center">
-          🗣️ Text-to-Speech Converter
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-white flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 border border-purple-200">
+        <h1 className="text-4xl font-extrabold text-purple-700 mb-6 text-center">
+          🎤 Audio to Text Transcription
         </h1>
-        <p className="text-center text-gray-600 mb-8 font-bold">
-          Upload your document file to convert its content into speech.
+        <p className="text-center text-gray-600 mb-8">
+          Upload an{" "}
+          <span className="font-semibold text-purple-600">audio file</span> to
+          convert it into readable text.
         </p>
 
         <div className="space-y-6">
           {/* File Upload */}
           <div>
-            <label className="block text-gray-800 font-medium mb-2">
-              📁 Choose a text file
+            <label className="block text-gray-700 font-semibold mb-2">
+              📁 Select Audio File
             </label>
             <input
               type="file"
-              accept=".txt,.text,text/plain"
+              accept="audio/*"
               onChange={handleFileSelect}
-              className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition"
+              className="w-full text-sm text-gray-700 border border-gray-300 rounded-lg shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 transition"
             />
           </div>
 
-          {/* File Info Display */}
+          {/* File Info */}
           {selectedFile && (
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <p className="text-green-800 font-semibold">📄 File Loaded:</p>
+              <p className="text-green-800 font-semibold">
+                🔊 Audio File Loaded:
+              </p>
               <p className="text-green-700">{selectedFile.name}</p>
               <p className="text-green-600 text-sm">
-                Size: {selectedFile.size} bytes | Characters: {text.length}
+                Size: {selectedFile.size} bytes
               </p>
             </div>
           )}
 
-          {/* Convert Button */}
+          {/* Button */}
           <button
             onClick={handleConvertToSpeech}
-            disabled={!selectedFile || !text}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+            disabled={!selectedFile}
+            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition"
           >
-            🎧 Convert to Speech
+            🧠 Transcribe Audio
           </button>
 
-          {/* Text Preview Section */}
+          {/* Transcription Preview */}
           {outputText && (
-            <div className="bg-gray-100 rounded-md p-5 shadow-inner mt-4">
+            <div className="mt-6 bg-gray-100 rounded-md p-5 shadow-inner">
               <h3 className="text-lg font-bold text-gray-800 mb-3">
-                📝 Extracted Text Preview
+                📝 Transcribed Text
               </h3>
               <div className="max-h-64 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white p-3 rounded border border-gray-300">
                 <pre>{outputText}</pre>
@@ -195,4 +199,4 @@ function TexttoSpeech() {
   );
 }
 
-export default TexttoSpeech;
+export default AudiotoTextPage;
