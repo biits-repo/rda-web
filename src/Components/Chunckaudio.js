@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 function Chunckaudio() {
   const router = useRouter();
@@ -57,9 +59,18 @@ function Chunckaudio() {
     return null;
   }
 
-  const handleChunkAudio = () => {
-    console.log("Chunking audio at:", selectedTime);
-    alert(`Chunking audio at ${selectedTime}`);
+  const handleChunkAudio = async () => {
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/chunking/", {
+        start_time: selectedTime,
+      });
+
+      if (res.status === 200) {
+        toast.success(res.message || "Audio chunking started successfully");
+      }
+    } catch (error) {
+      toast.error("Error while chunking audio");
+    }
   };
 
   return (

@@ -70,7 +70,7 @@ function Dashboard() {
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center min-h-screen ">
+        <div className="flex flex-col items-center justify-center min-h-screen pt-6">
           <div className="flex flex-row items-center justify-center gap-4 ">
             <div
               onClick={() => {
