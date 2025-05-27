@@ -1,14 +1,16 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
 
 function OCRPage() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [text, setText] = useState(""); // State to store textarea input
   const [outputText, setOutputText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -59,83 +61,63 @@ function OCRPage() {
     return null;
   }
 
-  // Function to handle file selection (called when file is selected)
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0]; // Get the file directly from event
-
-    if (!file) {
-      alert("Please select a file first!");
-      return;
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
     }
-
-    // Check file type
-    if (!file.type.includes("text") && !file.name.endsWith(".txt")) {
-      alert("Please select a text file (.txt)");
-      return;
-    }
-
-    // Set the selected file state
-    setSelectedFile(file);
-
-    // Create FileReader to read the file
-    const reader = new FileReader();
-
-    // Set up what happens when file is read
-    reader.onload = (e) => {
-      const fileContent = e.target.result;
-
-      // Print the extracted text
-      console.log("=== FILE READING COMPLETE ===");
-      console.log("File name:", file.name);
-      console.log("File size:", file.size, "bytes");
-      console.log("File type:", file.type);
-      console.log("=== EXTRACTED TEXT CONTENT ===");
-      console.log(fileContent);
-      console.log("=== END OF FILE CONTENT ===");
-
-      // Set the text for display/further processing
-      setText(fileContent);
-      setOutputText(fileContent);
-    };
-
-    // Handle errors
-    reader.onerror = () => {
-      console.error("Error reading file");
-      alert("Error reading the file");
-    };
-
-    // Start reading the file as text
-    reader.readAsText(file);
   };
 
-  // Function to handle Convert to Speech button click
   const handleConvertToSpeech = async () => {
-    const url = "http://127.0.0.1:8000/api/convert_to_speech/";
-    const param = {
-      data: outputText,
-    };
+    if (!selectedFile) return;
 
-    console.log("Sending data to Python API:", param);
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("pdf_file", selectedFile);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(param),
-    });
+      const res = await axios.post(
+        "https://expenseapp.creowiz.com/api/extract_text/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (res.status === 200) {
+        setOutputText(res.data.text_file_path);
+        toast.success("OCR processed successfully!");
+        setLoading(false);
+      } else {
+        toast.error("Failed to process OCR");
+        setLoading(false);
+      }
+    } catch (error) {
+      toast.error("Failed to process OCR try different file");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const result = await response.json();
+  const handleDownload = async (outputText) => {
+    const response = await fetch("https://expenseapp.creowiz.com" + outputText);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
 
-    console.log("API Response:", result);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "filename.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white flex items-center justify-center px-4 py-10">
+      <ToastContainer />
       <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl p-8 border border-blue-100">
         <h1 className="text-4xl font-bold text-blue-800 mb-6 text-center">
           OCR Text Extractor
@@ -151,40 +133,32 @@ function OCRPage() {
             </label>
             <input
               type="file"
-              accept=".txt,.text,text/plain"
+              accept=".png,.jpg,.jpeg,.pdf"
               onChange={handleFileSelect}
               className="w-full text-sm text-gray-700 border border-gray-300 rounded-lg shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition"
             />
           </div>
 
-          {selectedFile && (
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <p className="text-green-800 font-semibold">📄 File Loaded:</p>
-              <p className="text-green-700">{selectedFile.name}</p>
-              <p className="text-green-600 text-sm">
-                Size: {selectedFile.size} bytes | Characters: {text.length}
-              </p>
-            </div>
-          )}
-
           <button
             onClick={handleConvertToSpeech}
-            disabled={!selectedFile || !text}
-            className="w-full bg-blue-600 text-white py-2 px-6 rounded-md text-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+            disabled={!selectedFile || loading}
+            className={`w-full py-2 px-6 rounded-md text-lg font-semibold transition ${
+              loading
+                ? "bg-blue-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
-            🧠 Process OCR 
+            {loading ? "Processing..." : "🧠 Process OCR"}
           </button>
 
-          {/* {outputText && (
-            <div className="mt-6 bg-gray-100 rounded-md p-4 shadow-inner">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
-                📜 Extracted Text
-              </h3>
-              <div className="max-h-60 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white p-3 rounded border border-gray-300">
-                <pre>{outputText}</pre>
-              </div>
-            </div>
-          )} */}
+          {outputText && (
+            <button
+              className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-6 rounded-md text-lg font-semibold hover:bg-green-700 transition"
+              onClick={() => handleDownload(outputText)}
+            >
+              📥 Download Extracted Text
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -192,3 +166,5 @@ function OCRPage() {
 }
 
 export default OCRPage;
+
+// 'https://expenseapp.creowiz.com'+outputText

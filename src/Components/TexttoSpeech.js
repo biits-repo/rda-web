@@ -1,15 +1,19 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
+import axios from "axios";
 
 function TexttoSpeech() {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [text, setText] = useState(""); // State to store textarea input
   const [outputText, setOutputText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const audioRef = useRef(null); // Reference to audio player
 
+  // Authentication check
   useEffect(() => {
     const checkAuth = () => {
       try {
@@ -46,6 +50,66 @@ function TexttoSpeech() {
     checkAuth();
   }, [router]);
 
+  // File selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  // Convert file to speech
+  const handleConvertToSpeech = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const res = await axios.post(
+        "https://expenseapp.creowiz.com/api/convert_to_speech/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (res.status === 200) {
+        const filePath = res.data.audio_file;
+        setOutputText(filePath);
+        toast.success("Speech generated successfully!");
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play();
+          }
+        }, 500);
+      } else {
+        toast.error("Failed to convert to speech");
+      }
+    } catch (error) {
+      toast.error("Failed to convert. Try a different file.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Download audio file
+  const handleDownload = async (path) => {
+    const response = await fetch("https://expenseapp.creowiz.com" + path);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "speech.mp3";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -55,87 +119,11 @@ function TexttoSpeech() {
     );
   }
 
-  if (!isAuthorized) {
-    return null;
-  }
-
-  // Function to handle file selection (called when file is selected)
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0]; // Get the file directly from event
-
-    if (!file) {
-      alert("Please select a file first!");
-      return;
-    }
-
-    // Check file type
-    if (!file.type.includes("text") && !file.name.endsWith(".txt")) {
-      alert("Please select a text file (.txt)");
-      return;
-    }
-
-    // Set the selected file state
-    setSelectedFile(file);
-
-    // Create FileReader to read the file
-    const reader = new FileReader();
-
-    // Set up what happens when file is read
-    reader.onload = (e) => {
-      const fileContent = e.target.result;
-
-      // Print the extracted text
-      console.log("=== FILE READING COMPLETE ===");
-      console.log("File name:", file.name);
-      console.log("File size:", file.size, "bytes");
-      console.log("File type:", file.type);
-      console.log("=== EXTRACTED TEXT CONTENT ===");
-      console.log(fileContent);
-      console.log("=== END OF FILE CONTENT ===");
-
-      // Set the text for display/further processing
-      setText(fileContent);
-      setOutputText(fileContent);
-    };
-
-    // Handle errors
-    reader.onerror = () => {
-      console.error("Error reading file");
-      alert("Error reading the file");
-    };
-
-    // Start reading the file as text
-    reader.readAsText(file);
-  };
-
-  // Function to handle Convert to Speech button click
-  const handleConvertToSpeech = async () => {
-    const url = "http://127.0.0.1:8000/api/convert_to_speech/";
-    const param = {
-      data: outputText,
-    };
-
-    console.log("Sending data to Python API:", param);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(param),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    console.log("API Response:", result);
-  };
+  if (!isAuthorized) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 py-10">
+      <ToastContainer />
       <div className="w-full max-w-3xl bg-white rounded-xl shadow-2xl p-8 border border-blue-100">
         <h1 className="text-4xl font-bold text-blue-700 mb-6 text-center">
           🗣️ Text-to-Speech Converter
@@ -158,35 +146,37 @@ function TexttoSpeech() {
             />
           </div>
 
-          {/* File Info Display */}
-          {selectedFile && (
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <p className="text-green-800 font-semibold">📄 File Loaded:</p>
-              <p className="text-green-700">{selectedFile.name}</p>
-              <p className="text-green-600 text-sm">
-                Size: {selectedFile.size} bytes | Characters: {text.length}
-              </p>
-            </div>
-          )}
-
           {/* Convert Button */}
           <button
             onClick={handleConvertToSpeech}
-            disabled={!selectedFile || !text}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+            disabled={!selectedFile || loading}
+            className={`w-full py-3 px-6 rounded-lg text-lg font-semibold transition ${
+              loading
+                ? "bg-blue-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
-            🎧 Convert to Speech
+            {loading ? "🔄 Converting..." : "🎧 Convert to Speech"}
           </button>
 
-          {/* Text Preview Section */}
+          {/* Audio Preview + Download */}
           {outputText && (
-            <div className="bg-gray-100 rounded-md p-5 shadow-inner mt-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">
-                📝 Extracted Text Preview
-              </h3>
-              <div className="max-h-64 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white p-3 rounded border border-gray-300">
-                <pre>{outputText}</pre>
-              </div>
+            <div className="space-y-4">
+              <audio
+                ref={audioRef}
+                controls
+                className="w-full mt-4"
+                src={`https://expenseapp.creowiz.com${outputText}`}
+              >
+                Your browser does not support the audio element.
+              </audio>
+
+              <button
+                className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-6 rounded-md text-lg font-semibold hover:bg-green-700 transition"
+                onClick={() => handleDownload(outputText)}
+              >
+                📥 Download Speech MP3
+              </button>
             </div>
           )}
         </div>
