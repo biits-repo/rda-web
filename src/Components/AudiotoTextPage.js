@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 
 function AudiotoTextPage() {
@@ -13,14 +13,16 @@ function AudiotoTextPage() {
 
   const getPath = async () => {
     try {
-      const res = await axios.get("http://127.0.01:8000/get_path/");
+      const res = await axios.get("http://127.0.0.1:10000/get_path/");
       if (res.status === 200) {
         toast.success("Path fetched successfully");
-        setOutputTextPath(res.chunk_dir);
+        setOutputTextPath(res.data.chunk_dir);
       } else {
         toast.error("Failed to fetch path");
       }
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Failed to fetch path");
+    }
   };
   useEffect(() => {
     const checkAuth = () => {
@@ -68,30 +70,47 @@ function AudiotoTextPage() {
     );
   }
 
+  console.log("tyoeof ", typeof outputTextPath);
+
   if (!isAuthorized) {
     return null;
   }
-
-  // useEffect(() => {
-  //   getPath();
-  // }, []);
-
   // Function to handle Convert to Speech button click
   const handleConvertToSpeech = async () => {
+    setIsLoading(true);
+    const requestBody = {
+      chunk_path: "C:\\Users\\mohammad.adeeb\\ChunkingScheduler\\Chunks",
+    };
     try {
-      const res = await axios.post("http://127.0.0.1:8000/start_script/", {
-        chunk_path: outputTextPath,
+      const res = await fetch("http://127.0.0.1:8000/start_script/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
+      const data = await res.json(); // ✅ parse the JSON
+
+      console.log("Response message:", data.message);
+      console.log("Raw response body:", res.body);
+      console.log("Response status:", res.status);
+
       if (res.status === 200) {
-        toast.success(res.message);
+        toast.success(data.message); // ✅ use the parsed data
+      } else {
+        toast.error(`Error ${res.status}: ${data.detail || "Unknown error"}`);
       }
     } catch (error) {
+      setIsLoading(false);
       toast.error("Failed to start script");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-white flex items-center justify-center px-4 py-10">
+      <ToastContainer />
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 border border-purple-200">
         <h1 className="text-4xl font-extrabold text-purple-700 mb-6 text-center">
           🎤 Audio to Text Transcription
@@ -104,7 +123,7 @@ function AudiotoTextPage() {
 
         <div>
           <p className="text-center text-gray-600 mb-8">
-            <span className="font-semibold text-purple-600">audio file</span> to
+            <span className="font-semibold text-purple-600">audio file</span> to{" "}
             {outputTextPath}
           </p>
         </div>
@@ -113,12 +132,11 @@ function AudiotoTextPage() {
           {/* Button */}
           <button
             onClick={handleConvertToSpeech}
+            disabled={!outputTextPath ||isLoading}
             className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition"
           >
-            🧠 Transcribe Audio
+            {isLoading ? "Transcribing....." : "🧠 Transcribe Audio"}
           </button>
-
-          {/* Transcription Preview */}
         </div>
       </div>
     </div>

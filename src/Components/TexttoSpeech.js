@@ -11,7 +11,7 @@ function TexttoSpeech() {
   const [outputText, setOutputText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const audioRef = useRef(null); // Reference to audio player
+  const audioRef = useRef(null);
 
   // Authentication check
   useEffect(() => {

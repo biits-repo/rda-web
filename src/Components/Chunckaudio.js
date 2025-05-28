@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 function Chunckaudio() {
   const router = useRouter();
@@ -61,20 +61,44 @@ function Chunckaudio() {
 
   const handleChunkAudio = async () => {
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/chunking/", {
+      setIsLoading(true);
+      const requestBody = {
         start_time: selectedTime,
+      };
+
+      const res = await fetch("http://127.0.0.1:10000/chunking/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error response:", errorText);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Response:", data);
+
       if (res.status === 200) {
-        toast.success(res.message || "Audio chunking started successfully");
+        toast.success(data.message || "Audio chunking started successfully");
+      } else {
+        toast.error(data.message || "Error while chunking audio");
       }
     } catch (error) {
       toast.error("Error while chunking audio");
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-white px-4 py-10">
+      <ToastContainer />
       <div className="w-full max-w-xl bg-white border border-indigo-200 shadow-xl rounded-2xl p-8">
         <h2 className="text-3xl font-extrabold text-indigo-700 text-center mb-2">
           ⏱ Scheduled Task Runner
@@ -119,10 +143,10 @@ function Chunckaudio() {
         {/* Start Task Button */}
         <button
           onClick={handleChunkAudio}
-          disabled={!selectedTime}
+          disabled={!selectedTime || isLoading}
           className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
         >
-          🚀 Start Task
+          {isLoading ? "Chuncking data" : "🚀 Start Task"}
         </button>
       </div>
     </div>
