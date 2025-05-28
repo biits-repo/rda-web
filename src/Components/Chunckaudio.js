@@ -9,6 +9,7 @@ function Chunckaudio() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTime, setSelectedTime] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -61,7 +62,7 @@ function Chunckaudio() {
 
   const handleChunkAudio = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       const requestBody = {
         start_time: selectedTime,
       };
@@ -90,9 +91,9 @@ function Chunckaudio() {
       }
     } catch (error) {
       toast.error("Error while chunking audio");
-      setIsLoading(false);
+      setLoading(false);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -144,9 +145,11 @@ function Chunckaudio() {
         <button
           onClick={handleChunkAudio}
           disabled={!selectedTime || isLoading}
-          className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
+          className={`w-full bg-indigo-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition ${
+            loading ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
         >
-          {isLoading ? "Chuncking data" : "🚀 Start Task"}
+          {loading ? "Chuncking data" : "🚀 Start Task"}
         </button>
       </div>
     </div>

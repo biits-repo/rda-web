@@ -10,6 +10,7 @@ function AudiotoTextPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [text, setText] = useState(""); // State to store textarea input
   const [outputTextPath, setOutputTextPath] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const getPath = async () => {
     try {
@@ -77,7 +78,7 @@ function AudiotoTextPage() {
   }
   // Function to handle Convert to Speech button click
   const handleConvertToSpeech = async () => {
-    setIsLoading(true);
+    setLoading(true);
     const requestBody = {
       chunk_path: "C:\\Users\\mohammad.adeeb\\ChunkingScheduler\\Chunks",
     };
@@ -96,15 +97,16 @@ function AudiotoTextPage() {
       console.log("Response status:", res.status);
 
       if (res.status === 200) {
-        toast.success(data.message); // ✅ use the parsed data
+        toast.success(data.message);
+        setLoading(false);
       } else {
         toast.error(`Error ${res.status}: ${data.detail || "Unknown error"}`);
       }
     } catch (error) {
-      setIsLoading(false);
+      setLoading(false);
       toast.error("Failed to start script");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -132,10 +134,12 @@ function AudiotoTextPage() {
           {/* Button */}
           <button
             onClick={handleConvertToSpeech}
-            disabled={!outputTextPath ||isLoading}
-            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition"
+            disabled={!outputTextPath || loading}
+            className={`w-full bg-purple-600 text-white py-3 px-6 rounded-lg text-lg font-semibold hover:bg-purple-700 disabled:opacity-50 transition ${
+              loading ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
           >
-            {isLoading ? "Transcribing....." : "🧠 Transcribe Audio"}
+            {loading ? "Transcribing....." : "🧠 Transcribe Audio"}
           </button>
         </div>
       </div>
